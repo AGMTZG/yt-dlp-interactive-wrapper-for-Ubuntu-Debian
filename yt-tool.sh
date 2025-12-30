@@ -54,6 +54,7 @@ case "$DEFAULT_BROWSER_LOWER" in
     ;;
 esac
 
+# ---- Checking if a default browser was detected  ----
 if [ -z "$BROWSER" ]; then
   echo "Could not detect default browser."
   echo "Falling back to first supported browser found."
@@ -77,6 +78,7 @@ fi
 echo "Using browser cookies from: $BROWSER"
 echo "Make sure you are logged in to YouTube in this browser."
 
+# ---- Menu  ----
 echo
 echo "Select an option:"
 echo "  1) Download audio (m4a)"
@@ -94,13 +96,18 @@ if [ -z "$URL" ]; then
   exit 1
 fi
 
+# ---- Download directories ----
+BASE_DIR="$(pwd)/downloads"
+AUDIO_DIR="$BASE_DIR/audio"
+VIDEO_DIR="$BASE_DIR/video"
+
 case "$OPTION" in
   1)
     echo "Downloading audio (m4a)..."
     yt-dlp \
       --cookies-from-browser "$BROWSER" \
       -f bestaudio \
-      -o "%(title)s.%(ext)s" \
+      -o "$AUDIO_DIR/%(title)s.%(ext)s" \
       "$URL"
     ;;
   2)
@@ -109,7 +116,7 @@ case "$OPTION" in
     yt-dlp \
       --cookies-from-browser "$BROWSER" \
       -x --audio-format mp3 --audio-quality 0 \
-      -o "%(title)s.%(ext)s" \
+      -o "$AUDIO_DIR/%(title)s.%(ext)s" \
       "$URL"
     ;;
   3)
@@ -118,7 +125,7 @@ case "$OPTION" in
     yt-dlp \
       --cookies-from-browser "$BROWSER" \
       -x --audio-format wav \
-      -o "%(title)s.%(ext)s" \
+      -o "$AUDIO_DIR/%(title)s.%(ext)s" \
       "$URL"
     ;;
   4)
@@ -165,7 +172,7 @@ case "$OPTION" in
       --cookies-from-browser "$BROWSER" \
       -f "$FORMAT/bv*+ba/b" \
       --merge-output-format mp4 \
-      -o "%(title)s.%(ext)s" \
+      -o "$VIDEO_DIR/%(title)s.%(ext)s" \
       "$URL"
     ;;
   5)
@@ -173,7 +180,7 @@ case "$OPTION" in
     yt-dlp \
       --cookies-from-browser "$BROWSER" \
       -f best \
-      -o "%(title)s.%(ext)s" \
+      -o "$VIDEO_DIR/%(title)s.%(ext)s" \
       "$URL"
     ;;
   *)
