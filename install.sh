@@ -2,7 +2,7 @@
 
 set -e
 
-echo "=== YouTube Downloader Installer ==="
+echo "=== Media Downloader Installer ==="
 echo
 
 # ---- Check OS ----
