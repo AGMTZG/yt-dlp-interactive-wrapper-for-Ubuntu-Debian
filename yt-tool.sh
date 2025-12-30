@@ -76,7 +76,7 @@ if [ -z "$BROWSER" ]; then
 fi
 
 echo "Using browser cookies from: $BROWSER"
-echo "Make sure you are logged in to YouTube in this browser."
+echo "Authenticated sessions will use this browser context."
 
 # ---- Menu  ----
 echo
@@ -90,19 +90,15 @@ echo
 read -p "Enter option [1-5]: " OPTION
 
 echo
-echo "Paste a full YouTube URL, for example:"
-echo "https://www.youtube.com/watch?v=XXXXXXXXXXX"
+echo "Paste a supported media URL (for example):"
+echo "https://example.com/media"
 echo
 
-read -p "Paste YouTube URL: " URL
+read -p "Paste media URL: " URL
+
 
 if [ -z "$URL" ]; then
   echo "No URL provided."
-  exit 1
-fi
-
-if [[ ! "$URL" =~ youtube\.com|youtu\.be ]]; then
-  echo "That does not look like a YouTube URL."
   exit 1
 fi
 
@@ -203,7 +199,7 @@ case "$OPTION" in
         "$URL"
     else
       echo "WebM is not available for this video."
-      echo "YouTube only exposed HLS MP4 formats."
+      echo "The source only exposed HLS MP4 formats."
       echo "Try option 4 (MP4) instead."
       exit 1
     fi
