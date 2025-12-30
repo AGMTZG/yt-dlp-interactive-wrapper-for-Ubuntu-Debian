@@ -85,14 +85,24 @@ echo "  1) Download audio (m4a)"
 echo "  2) Download audio (mp3)"
 echo "  3) Download audio (wav)"
 echo "  4) Download video (mp4)"
-echo "  5) Download video (webm)"
+echo "  5) Download video (webm if available, otherwise not supported)"
 echo
 read -p "Enter option [1-5]: " OPTION
+
+echo
+echo "Paste a full YouTube URL, for example:"
+echo "https://www.youtube.com/watch?v=XXXXXXXXXXX"
+echo
 
 read -p "Paste YouTube URL: " URL
 
 if [ -z "$URL" ]; then
   echo "No URL provided."
+  exit 1
+fi
+
+if [[ ! "$URL" =~ youtube\.com|youtu\.be ]]; then
+  echo "That does not look like a YouTube URL."
   exit 1
 fi
 
@@ -105,15 +115,17 @@ case "$OPTION" in
   1)
     echo "Downloading audio (m4a)..."
     yt-dlp \
+      --no-overwrites \
       --cookies-from-browser "$BROWSER" \
-      -f bestaudio \
       -o "$AUDIO_DIR/%(title)s.%(ext)s" \
+      -x \
       "$URL"
     ;;
   2)
     needs_ffmpeg
     echo "Downloading audio (mp3)..."
     yt-dlp \
+      --no-overwrites \
       --cookies-from-browser "$BROWSER" \
       -x --audio-format mp3 --audio-quality 0 \
       -o "$AUDIO_DIR/%(title)s.%(ext)s" \
@@ -123,6 +135,7 @@ case "$OPTION" in
     needs_ffmpeg
     echo "Downloading audio (wav)..."
     yt-dlp \
+      --no-overwrites \
       --cookies-from-browser "$BROWSER" \
       -x --audio-format wav \
       -o "$AUDIO_DIR/%(title)s.%(ext)s" \
@@ -169,6 +182,7 @@ case "$OPTION" in
 
     echo "Downloading video (mp4)..."
     yt-dlp \
+      --no-overwrites \
       --cookies-from-browser "$BROWSER" \
       -f "$FORMAT/bv*+ba/b" \
       --merge-output-format mp4 \
@@ -177,11 +191,22 @@ case "$OPTION" in
     ;;
   5)
     echo "Downloading video (webm)..."
-    yt-dlp \
-      --cookies-from-browser "$BROWSER" \
-      -f best \
-      -o "$VIDEO_DIR/%(title)s.%(ext)s" \
-      "$URL"
+    if yt-dlp --cookies-from-browser "$BROWSER" -F "$URL" | awk '$2=="webm" {found=1} END{exit !found}'; then
+      echo "WebM formats detected. Downloading WebM..."
+
+      yt-dlp \
+        --no-overwrites \
+        --cookies-from-browser "$BROWSER" \
+        -f "bv*[ext=webm]+ba*[ext=webm]" \
+        --merge-output-format webm \
+        -o "$VIDEO_DIR/%(title)s.webm" \
+        "$URL"
+    else
+      echo "WebM is not available for this video."
+      echo "YouTube only exposed HLS MP4 formats."
+      echo "Try option 4 (MP4) instead."
+      exit 1
+    fi
     ;;
   *)
     echo "Invalid option."
