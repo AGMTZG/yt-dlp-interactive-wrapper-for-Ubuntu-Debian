@@ -1,0 +1,147 @@
+#!/usr/bin/env bash
+
+set -e
+
+# ---- Dependency checks ----
+if ! command -v yt-dlp >/dev/null 2>&1; then
+  echo "yt-dlp is not installed."
+  echo "Install it from https://github.com/yt-dlp/yt-dlp"
+  exit 1
+else 
+  echo "yt-dlp is installed (Make sure the latest version is installed by visiting: https://github.com/yt-dlp/yt-dlp)"
+fi
+
+if ! command -v ffmpeg >/dev/null 2>&1; then
+  echo "ffmpeg is not installed."
+  echo "Install it using your package manager."
+  exit 1
+else 
+  echo "ffmpeg is installed"
+fi
+
+# ---- Function to check ffmpeg dependency ----
+needs_ffmpeg() {
+  if ! command -v ffmpeg >/dev/null 2>&1; then
+    echo "ffmpeg is required for this option."
+    echo "Install ffmpeg and try again."
+    exit 1
+  fi
+}
+
+# ---- Check default browser ----
+BROWSER=""
+DEFAULT_BROWSER=$(xdg-settings get default-web-browser 2>/dev/null)
+DEFAULT_BROWSER_LOWER=$(echo "$DEFAULT_BROWSER" | tr '[:upper:]' '[:lower:]')
+
+case "$DEFAULT_BROWSER_LOWER" in
+  *firefox*)
+    BROWSER="firefox"
+    ;;
+  *chrome*)
+    BROWSER="chrome"
+    ;;
+  *chromium*)
+    BROWSER="chromium"
+    ;;
+  *brave*)
+    BROWSER="brave"
+    ;;
+  *edge*)
+    BROWSER="edge"
+    ;;
+  *)
+    BROWSER=""
+    ;;
+esac
+
+if [ -z "$BROWSER" ]; then
+  echo "Could not detect default browser."
+  echo "Falling back to first supported browser found."
+
+  if command -v firefox >/dev/null 2>&1; then
+    BROWSER="firefox"
+  elif command -v google-chrome >/dev/null 2>&1; then
+    BROWSER="chrome"
+  elif command -v chromium >/dev/null 2>&1; then
+    BROWSER="chromium"
+  elif command -v brave >/dev/null 2>&1; then
+    BROWSER="brave"
+  elif command -v microsoft-edge >/dev/null 2>&1; then
+    BROWSER="edge"
+  else
+    echo "No supported browser found."
+    exit 1
+  fi
+fi
+
+echo "Using browser cookies from: $BROWSER"
+echo "Make sure you are logged in to YouTube in this browser."
+
+echo
+echo "Select an option:"
+echo "  1) Download audio (m4a)"
+echo "  2) Download audio (mp3)"
+echo "  3) Download audio (wav)"
+echo "  4) Download video (mp4)"
+echo "  5) Download video (webm)"
+echo
+read -p "Enter option [1-5]: " OPTION
+
+read -p "Paste YouTube URL: " URL
+
+if [ -z "$URL" ]; then
+  echo "No URL provided."
+  exit 1
+fi
+
+case "$OPTION" in
+  1)
+    echo "Downloading audio (m4a)..."
+    yt-dlp \
+      --cookies-from-browser "$BROWSER" \
+      -f bestaudio \
+      -o "%(title)s.%(ext)s" \
+      "$URL"
+    ;;
+  2)
+    needs_ffmpeg
+    echo "Downloading audio (mp3)..."
+    yt-dlp \
+      --cookies-from-browser "$BROWSER" \
+      -x --audio-format mp3 --audio-quality 0 \
+      -o "%(title)s.%(ext)s" \
+      "$URL"
+    ;;
+  3)
+    needs_ffmpeg
+    echo "Downloading audio (wav)..."
+    yt-dlp \
+      --cookies-from-browser "$BROWSER" \
+      -x --audio-format wav \
+      -o "%(title)s.%(ext)s" \
+      "$URL"
+    ;;
+  4)
+    needs_ffmpeg
+    echo "Downloading video (mp4)..."
+    yt-dlp \
+      --cookies-from-browser "$BROWSER" \
+      -f bestvideo+bestaudio \
+      --merge-output-format mp4 \
+      -o "%(title)s.%(ext)s" \
+      "$URL"
+    ;;
+  5)
+    echo "Downloading video (webm)..."
+    yt-dlp \
+      --cookies-from-browser "$BROWSER" \
+      -f best \
+      -o "%(title)s.%(ext)s" \
+      "$URL"
+    ;;
+  *)
+    echo "Invalid option."
+    exit 1
+    ;;
+esac
+
