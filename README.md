@@ -13,6 +13,11 @@ Run one command, follow the menu, get your files.
 - Uses browser cookies (no manual login)
 - Organizes downloads into clean folders
 
+## Important
+
+WebM downloads depend on YouTube exposing WebM formats.
+Some videos only provide HLS MP4 streams.
+
 ## Requirements
 - yt-dlp
 - ffmpeg
