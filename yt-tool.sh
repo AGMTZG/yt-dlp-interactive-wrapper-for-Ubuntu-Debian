@@ -123,10 +123,47 @@ case "$OPTION" in
     ;;
   4)
     needs_ffmpeg
+
+    echo
+    echo "Fetching available video resolutions..."
+
+    mapfile -t FORMATS < <(
+      yt-dlp --cookies-from-browser "$BROWSER" -F "$URL" \
+      | awk '$2=="mp4" && $0~"m3u8" && $3~"x" {print $1 "|" $3}'
+    )
+
+    if [ ${#FORMATS[@]} -eq 0 ]; then
+      echo "No compatible MP4 video formats found."
+      exit 1
+    fi
+
+    echo
+    echo "Available video resolutions:"
+    INDEX=1
+    declare -A FORMAT_MAP
+
+    for ENTRY in "${FORMATS[@]}"; do
+      FORMAT_ID="${ENTRY%%|*}"
+      RESOLUTION="${ENTRY##*|}"
+      echo "  $INDEX) $RESOLUTION"
+      FORMAT_MAP[$INDEX]="$FORMAT_ID"
+      ((INDEX++))
+    done
+
+    echo
+    read -p "Choose resolution [1-$((INDEX-1))]: " RES_OPT
+
+    FORMAT="${FORMAT_MAP[$RES_OPT]}"
+
+    if [ -z "$FORMAT" ]; then
+      echo "Invalid resolution option."
+      exit 1
+    fi
+
     echo "Downloading video (mp4)..."
     yt-dlp \
       --cookies-from-browser "$BROWSER" \
-      -f bestvideo+bestaudio \
+      -f "$FORMAT/bv*+ba/b" \
       --merge-output-format mp4 \
       -o "%(title)s.%(ext)s" \
       "$URL"
